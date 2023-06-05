@@ -34,7 +34,7 @@ jobs:
         run: npm install
 
       - name: Build application
-        run: npm run build
+        run: npm run start
 
       - name: Deploy to App Runner
         run: |

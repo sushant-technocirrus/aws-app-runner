@@ -1,4 +1,4 @@
-name: Deploy to App Runner
+name: Deploy to AWS App Runner
 
 on:
   push:
@@ -10,25 +10,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2 
+
+      - name: Install Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: 12
-
-      - name: Install AWS CLI
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y python3-pip
-          sudo pip3 install awscli
-
-      - name: Configure AWS credentials
-        run: |
-          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws configure set region us-west-2  # Replace with your desired AWS region
+          node-version: '12'
 
       - name: Install dependencies
         run: npm install
@@ -36,11 +31,10 @@ jobs:
       - name: Build application
         run: npm run start
 
-      - name: Deploy to App Runner
+      - name: Create AWS App Runner service
         run: |
           aws apprunner create-service \
-            --service-name aws-app-runner-service \
-            --source-code-repository 'repositoryUrl=https://github.com/sushant-technocirrus/aws-app-runner.git,sourceCodeVersion=main' \
-            --instance-configuration 'Cpu=1,Memory=2' \
-            --region us-west-2 \
-            --tags 'github.com/aws:app-runner-managed-by=github-actions'
+            --service-name aws-app-runner \
+            --source-configuration \
+              repositoryType=GitHub, \
+              repositoryUrl=https://github.com/sushant-technocirrus/aws-app-runner

@@ -34,7 +34,7 @@ jobs:
         run: npm install
 
       - name: Build application
-        run: npm run start
+        run: npm run build
 
       - name: Deploy to App Runner
         run: |
@@ -42,5 +42,5 @@ jobs:
             --service-name aws-app-runner-service \
             --source-code-repository 'repositoryUrl=https://github.com/sushant-technocirrus/aws-app-runner.git,sourceCodeVersion=main' \
             --instance-configuration 'Cpu=1,Memory=2' \
-            --region us-west-2  # Replace with your desired AWS region
-
+            --region us-west-2 \
+            --tags 'github.com/aws:app-runner-managed-by=github-actions'

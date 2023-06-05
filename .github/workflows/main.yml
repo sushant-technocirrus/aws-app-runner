@@ -18,6 +18,18 @@ jobs:
         with:
           node-version: 12
 
+      - name: Install AWS CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          sudo pip3 install awscli
+
+      - name: Configure AWS credentials
+        run: |
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws configure set region us-west-2  # Replace with your desired AWS region
+
       - name: Install dependencies
         run: npm install
 
@@ -25,11 +37,10 @@ jobs:
         run: npm run build
 
       - name: Deploy to App Runner
-        uses: aws-actions/amazon-apprunner-action@v0.2.0
-        with:
-          region: ap-south-1
-          service-name: aws-app-runner-service
-          image-source: github
-          image-identifier: sushant-technocirrus/aws-app-runner
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: |
+          aws apprunner create-service \
+            --service-name aws-app-runner-service \
+            --source-code-repository 'repositoryUrl=https://github.com/sushant-technocirrus/aws-app-runner.git,sourceCodeVersion=main' \
+            --instance-configuration 'Cpu=1,Memory=2' \
+            --region us-west-2  # Replace with your desired AWS region
+

@@ -1,4 +1,4 @@
-name: Deploy to AWS App Runner
+name: Deploy to App Runner
 
 on:
   push:
@@ -10,31 +10,33 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2 
-
-      - name: Install Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v2
         with:
-          node-version: '12'
+          node-version: '14'
 
       - name: Install dependencies
         run: npm install
 
-      - name: Build application
+      - name: Build
         run: npm run start
 
-      - name: Create AWS App Runner service
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build and push Docker image
         run: |
-          aws apprunner create-service \
-            --service-name aws-app-runner \
-            --source-configuration \
-              repositoryType=GitHub, \
-              repositoryUrl=https://github.com/sushant-technocirrus/aws-app-runner
+          aws ecr create-repository --repository-name sushant-technocirrus || true
+          docker build -t sushant-technocirrus .
+          docker tag sushant-technocirrus:latest 285984116532.dkr.ecr.us-west-2.amazonaws.com/sushant-technocirrus:latest
+          docker push 285984116532.dkr.ecr.us-west-2.amazonaws.com/sushant-technocirrus:latest
+
+      - name: Deploy to App Runner
+        uses: aws-actions/aws-apprunner-action@v1
+        with:
+          name: sushant-technocirrus
+          image: 285984116532.dkr.ecr.us-west-2.amazonaws.com/sushant-technocirrus:latest
+          port: 3000

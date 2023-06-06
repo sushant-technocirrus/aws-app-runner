@@ -1,19 +1,12 @@
-name: Build and Deploy to App Runner
+name: Deploy to AWS App Runner
 
 on:
   push:
     branches:
       - main
 
-# ENVIRONMENTS
-env:
-  AWS_REGION: us-west-2
-  ECR_REGISTRY: 285984116532.dkr.ecr.us-west-2.amazonaws.com/aws-app-runner-ecr-repo
-  APP_RUNNER_SERVICE_NAME: aws-app-runner-service
-  APP_RUNNER_PORT: 8080
-
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -25,28 +18,19 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: us-west-2
 
-      - name: Build Docker image
-        run: docker build -t ${{ env.ECR_REGISTRY }}:${{ github.sha }} .
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        with:
-          registry: ${{ env.ECR_REGISTRY }}
-          permissions: |
-            ecr:GetAuthorizationToken
-            ecr:BatchCheckLayerAvailability
-
-      - name: Push image to Amazon ECR
+      - name: Configure AWS ECR registry
         run: |
-          docker tag ${{ env.ECR_REGISTRY }}:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}:${{ github.sha }}
-          docker push ${{ steps.login-ecr.outputs.registry }}:${{ github.sha }}
-
-      - name: Create or update AWS App Runner service
+          aws ecr get-login-password --region us-west-2 | docker login --username AWS --password-stdin 285984116532.dkr.ecr.us-west-2.amazonaws.com
+      
+      - name: Build and push Docker image
         run: |
-          aws apprunner create-service \
-            --service-name ${{ env.APP_RUNNER_SERVICE_NAME }} \
-            --source-configuration "imageRepository=imageUri=${{ steps.login-ecr.outputs.registry }}:${{ github.sha }}" \
-            --port ${{ env.APP_RUNNER_PORT }}
+          docker build -t 285984116532.dkr.ecr.us-west-2.amazonaws.com:latest .
+          docker push 285984116532.dkr.ecr.us-west-2.amazonaws.com:latest
+
+      - name: Deploy to App Runner
+        run: |
+          aws apprunner create-service --service-name app-runner-service \
+            --source-configuration "RepositoryType=ECR,ImageRepository=285984116532.dkr.ecr.us-west-2.amazonaws.com,ImageIdentifier=latest" \
+            --region your-us-west-2

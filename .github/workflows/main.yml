@@ -1,42 +1,46 @@
-name: Deploy to App Runner
+name: Build and Deploy to App Runner
 
 on:
   push:
     branches:
       - main
 
+env:
+  AWS_REGION: us-west-2
+  ECR_REGISTRY: 285984116532.dkr.ecr.us-west-2.amazonaws.com/aws-app-runner-ecr-repo
+  APP_RUNNER_SERVICE_NAME: aws-app-runner-service
+  APP_RUNNER_PORT: 8080
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v2
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
         with:
-          node-version: '14'
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Build
-        run: npm run start
+      - name: Build Docker image
+        run: docker build -t ${{ env.ECR_REGISTRY }}:${{ github.sha }} .
 
       - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build and push Docker image
+      - name: Push image to Amazon ECR
         run: |
-          aws ecr create-repository --repository-name sushant-technocirrus || true
-          docker build -t sushant-technocirrus .
-          docker tag sushant-technocirrus:latest 285984116532.dkr.ecr.us-west-2.amazonaws.com/sushant-technocirrus:latest
-          docker push 285984116532.dkr.ecr.us-west-2.amazonaws.com/sushant-technocirrus:latest
+          docker tag ${{ env.ECR_REGISTRY }}:${{ github.sha }} ${{ steps.login-ecr.outputs.registry }}:${{ github.sha }}
+          docker push ${{ steps.login-ecr.outputs.registry }}:${{ github.sha }}
 
-      - name: Deploy to App Runner
-        uses: aws-actions/aws-apprunner-action@v1
-        with:
-          name: sushant-technocirrus
-          image: 285984116532.dkr.ecr.us-west-2.amazonaws.com/sushant-technocirrus:latest
-          port: 3000
+      - name: Create or update AWS App Runner service
+        run: |
+          aws apprunner create-service \
+            --service-name ${{ env.APP_RUNNER_SERVICE_NAME }} \
+            --source-configuration "imageRepository=imageUri=${{ steps.login-ecr.outputs.registry }}:${{ github.sha }}" \
+            --port ${{ env.APP_RUNNER_PORT }}

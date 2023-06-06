@@ -5,7 +5,7 @@ on:
     branches:
       - main
 
-#ENVIRONMENTS
+# ENVIRONMENTS
 env:
   AWS_REGION: us-west-2
   ECR_REGISTRY: 285984116532.dkr.ecr.us-west-2.amazonaws.com/aws-app-runner-ecr-repo
@@ -33,6 +33,11 @@ jobs:
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
+        with:
+          registry: ${{ env.ECR_REGISTRY }}
+          permissions: |
+            ecr:GetAuthorizationToken
+            ecr:BatchCheckLayerAvailability
 
       - name: Push image to Amazon ECR
         run: |

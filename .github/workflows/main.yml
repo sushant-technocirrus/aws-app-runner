@@ -42,7 +42,7 @@ jobs:
         with:
           service: techno-app-runner
           image: ${{ steps.build-image.outputs.image }}          
-          access-role-arn: ${{ secrets.ROLE_ARN }}         
+          #access-role-arn: ${{ secrets.ROLE_ARN }}     
           region: ${{ secrets.AWS_REGION }}
           wait-for-service-stability: true
     

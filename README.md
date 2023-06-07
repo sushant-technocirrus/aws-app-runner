@@ -1,6 +1,6 @@
 # Deploy to App Runner - Image based
 
-![Image Based](https://github.com/sushant-technocirrus/aws-app-runner/assets/122975959/9e42f9cc-0a86-4074-b2ea-b47fc1a87334)
+<img src="https://github.com/sushant-technocirrus/aws-app-runner/assets/122975959/fe78e1f0-8e06-4c8d-ad7b-2a3cd829381b" alt="Image Based" style="max-width: 500px;">
 
 ## Workflow Overview
 

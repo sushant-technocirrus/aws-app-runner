@@ -18,10 +18,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        environment: [${{ github.event.inputs.environment }}]
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -55,7 +52,7 @@ jobs:
         id: deploy-apprunner
         uses: awslabs/amazon-app-runner-deploy@main
         with:
-          service: techno-app-runner-${{ matrix.environment }}
+          service: techno-app-runner-${{ github.event.inputs.environment }}
           image: ${{ steps.build-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: ${{ secrets.AWS_REGION }}

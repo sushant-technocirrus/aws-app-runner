@@ -1,6 +1,6 @@
 # Deploy to App Runner - Image based
 
-![Image Based](https://github.com/sushant-technocirrus/aws-app-runner/assets/122975959/89c6b16c-5620-4cc5-a819-5e182fee2e95)
+![App-runner](https://github.com/sushant-technocirrus/aws-app-runner/assets/122975959/57217b0d-320e-4975-a64d-8adc5c8faca8)
 
 
 This GitHub Actions workflow simplifies the deployment of your application to AWS App Runner using Docker images. Automate your deployment process and effortlessly deploy your application to different environments (Dev, Test, Prod) with ease.

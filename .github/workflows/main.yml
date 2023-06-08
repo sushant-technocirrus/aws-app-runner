@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'In which environment you want to Deploy?'
+        description: 'In which environment you want to deploy?'
         required: true
         default: 'test'
         options:

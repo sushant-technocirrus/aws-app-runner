@@ -1,45 +1,55 @@
 # Deploy to App Runner - Image based
 
-<img src="https://github.com/sushant-technocirrus/aws-app-runner/assets/122975959/fe78e1f0-8e06-4c8d-ad7b-2a3cd829381b" alt="Image Based" style="max-width: 500px;">
+![Image Based](https://github.com/sushant-technocirrus/aws-app-runner/assets/122975959/89c6b16c-5620-4cc5-a819-5e182fee2e95)
 
-## Workflow Overview
 
-Welcome to the Deploy to App Runner workflow! This GitHub Actions workflow automates the seamless deployment of your Docker image to AWS App Runner, saving you time and effort. Whether you're pushing updates to the `main` branch or manually triggering the workflow, it ensures a smooth deployment process.
+This GitHub Actions workflow simplifies the deployment of your application to AWS App Runner using Docker images. Automate your deployment process and effortlessly deploy your application to different environments (Dev, Test, Prod) with ease.
 
 ## Workflow Triggers
 
-The workflow is triggered in two scenarios:
+The workflow can be triggered in two ways:
 
-1. **Push to `main` Branch**: Whenever a new commit is pushed to the `main` branch, the workflow is automatically triggered.
+- **Push Event**: Whenever there is a push to the `main` branch, the workflow is automatically triggered.
+- **Manual Execution**: You can manually trigger the workflow by selecting the desired environment from the provided options.
 
-2. **Manual Invocation**: The workflow can also be manually invoked by selecting the "Run workflow" option in the Actions tab of the repository.
+## Deployment Environments
 
-## Workflow Steps
+The workflow supports deployment to three robust environments: Dev, Test, and Prod. Choose the environment that best suits your needs when triggering the workflow manually.
 
-1. **Checkout**:
-   - This step checks out the repository code to access the necessary files for building and deploying the Docker image.
+### Dev Environment
 
-2. **Configure AWS credentials**:
-   - In this step, AWS credentials are configured using the provided secrets. The workflow uses the `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_REGION` secrets to authenticate and authorize AWS API calls.
+The Dev environment is designed for rapid development and testing. It deploys the application to the `us-west-2` region, ensuring a seamless testing experience. Once the deployment is complete, the workflow will display the App Runner service ID for the Dev environment.
 
-3. **Login to Amazon ECR**:
-   - This step logs in to Amazon Elastic Container Registry (ECR) using the AWS credentials configured in the previous step. It authenticates Docker to interact with the ECR repository.
+### Test Environment
 
-4. **Build, tag, and push image to Amazon ECR**:
-   - In this step, a Docker image is built, tagged with a unique identifier (using the commit SHA), and pushed to the specified Amazon ECR repository. The built image is based on the repository's code and any specified Dockerfile.
+The Test environment is perfect for comprehensive testing and quality assurance. It deploys the application to the `us-east-1` region, providing a controlled environment for thorough testing. After the deployment finishes, the workflow will reveal the App Runner service ID for the Test environment.
 
-5. **Deploy to App Runner**:
-   - This step deploys the Docker image to AWS App Runner. It uses the AWS App Runner service to create and manage the deployment. The `service` parameter specifies the name of the service, and the `image` parameter references the Docker image pushed to Amazon ECR in the previous step. Additionally, the `access-role-arn` secret provides the ARN of the IAM role with the necessary permissions for the deployment. The `region` secret specifies the AWS region in which the deployment will occur. The `wait-for-service-stability` parameter ensures that the workflow waits until the service reaches a stable state before proceeding.
+### Prod Environment
 
-6. **App Runner output**:
-   - Finally, this step displays the output of the App Runner deployment. It echoes the service ID of the deployed App Runner service, which can be useful for further processing or monitoring.
+The Prod environment is the ultimate destination for your application. It deploys the application to the `us-east-2` region, offering a highly available and scalable production environment. Once the deployment is complete, the workflow will unveil the App Runner service ID for the Prod environment.
 
-## Secrets Used
+## Prerequisites
 
-The workflow utilizes the following secrets from the repository's settings:
-- `AWS_ACCESS_KEY_ID`: AWS access key ID.
-- `AWS_SECRET_ACCESS_KEY`: AWS secret access key.
-- `AWS_REGION`: AWS region.
-- `ROLE_ARN`: Access role ARN.
+Before using this workflow, ensure you have completed the following steps:
 
-> Note: Make sure to set up the required secrets in your GitHub repository's settings before using this workflow.
+1. **AWS Credentials**: Set up your AWS credentials by adding the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` secrets to your GitHub repository.
+2. **IAM Role**: Create an AWS IAM role with the necessary permissions and store the ARN of the role as the `ROLE_ARN` secret in your repository.
+
+## Customizing the Workflow
+
+You have the flexibility to customize the workflow by modifying the following parameters:
+
+- `ECR_REPOSITORY`: Update the name of the ECR repository where the Docker image will be pushed.
+- `region`: Adjust the desired region for each environment's deployment.
+
+For further details on customizing the workflow and exploring advanced usage, refer to the [official GitHub Actions documentation](https://docs.github.com/en/actions).
+
+## Workflow Outputs
+
+After each successful deployment, the workflow provides the following outputs:
+
+- **Dev Environment**: The App Runner service ID for the Dev environment.
+- **Test Environment**: The App Runner service ID for the Test environment.
+- **Prod Environment**: The App Runner service ID for the Prod environment.
+
+#

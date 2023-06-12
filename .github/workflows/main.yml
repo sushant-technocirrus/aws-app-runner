@@ -60,7 +60,8 @@ jobs:
           wait-for-service-stability: true
 
       - name: Deploy to App Runner - Test Environment
-        if: github.event.inputs.environment == 'test' && steps.deploy-apprunner-dev.outputs.service-id != null
+        if: github.event.inputs.environment == 'test' && success('deploy-apprunner-dev')
+        needs: deploy-apprunner-dev
         id: deploy-apprunner-test
         uses: awslabs/amazon-app-runner-deploy@main
         with:
@@ -71,7 +72,8 @@ jobs:
           wait-for-service-stability: true
 
       - name: Deploy to App Runner - Prod Environment
-        if: github.event.inputs.environment == 'prod' && steps.deploy-apprunner-test.outputs.service-id != null
+        if: github.event.inputs.environment == 'prod' && success('deploy-apprunner-test')
+        needs: deploy-apprunner-test
         id: deploy-apprunner-prod
         uses: awslabs/amazon-app-runner-deploy@main
         with:

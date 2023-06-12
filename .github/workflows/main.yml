@@ -92,7 +92,9 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.deploy_test.outputs.deploy-apprunner-test.outputs.service-id != null ? needs.deploy_test.outputs.deploy-apprunner-test.outputs.build-image.outputs.image : '' }}
+          image: ${{ needs.deploy_test.outputs.deploy-apprunner-test.outputs.service-id != null && needs.deploy_test.outputs.deploy-apprunner-test.outputs.build-image.outputs.image != null ? needs.deploy_test.outputs.deploy-apprunner-test.outputs.build-image.outputs.image }}
+
+
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-2  # Update with the desired region for the prod environment
           wait-for-service-stability: true

@@ -65,7 +65,7 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
-            const { status } = await github.repos.getDeploymentStatus({
+            const { status } = await github.rest.repos.getDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
               deployment_id: ${{ steps.deploy-apprunner-dev.outputs.deployment-id }},
@@ -89,7 +89,7 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
-            const { status } = await github.repos.getDeploymentStatus({
+            const { status } = await github.rest.repos.getDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
               deployment_id: ${{ steps.deploy-apprunner-test.outputs.deployment-id }},
@@ -113,7 +113,7 @@ jobs:
         uses: actions/github-script@v4
         with:
           script: |
-            const { status } = await github.repos.getDeploymentStatus({
+            const { status } = await github.rest.repos.getDeploymentStatus({
               owner: context.repo.owner,
               repo: context.repo.repo,
               deployment_id: ${{ steps.deploy-apprunner-prod.outputs.deployment-id }},

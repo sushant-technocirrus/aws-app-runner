@@ -4,21 +4,10 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'In which environment would you like to deploy this application: Dev, Test, or Prod?'
-        required: true
-        options:
-          - dev
-          - test
-          - prod
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -47,9 +36,9 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-          
+
       - name: Deploy to App Runner - Dev Environment
-        if: github.event.inputs.environment == 'dev'
+        if: github.ref == 'refs/heads/main'
         id: deploy-apprunner-dev
         uses: awslabs/amazon-app-runner-deploy@main
         with:
@@ -60,11 +49,11 @@ jobs:
           wait-for-service-stability: true
           
       - name: Manual Approval for Test Environment
-        if: github.event.inputs.environment == 'dev'
+        if: github.ref == 'refs/heads/main' && steps.deploy-apprunner-dev.outcome == 'success'
         id: approval-test
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             console.log('::warning::Please manually approve the deployment to the Test environment.');
             console.log('::set-output name=approval-status::approved');
@@ -81,11 +70,11 @@ jobs:
           wait-for-service-stability: true
           
       - name: Manual Approval for Prod Environment
-        if: github.event.inputs.environment == 'test' && steps.deploy-apprunner-test.outcome == 'success'
+        if: github.ref == 'refs/heads/main' && steps.deploy-apprunner-test.outcome == 'success'
         id: approval-prod
         uses: actions/github-script@v4
         with:
-          github-token: ${{ secrets.TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             console.log('::warning::Please manually approve the deployment to the Prod environment.');
             console.log('::set-output name=approval-status::approved');
@@ -102,13 +91,13 @@ jobs:
           wait-for-service-stability: true
 
       - name: App Runner Dev Environment Output
-        if: github.event.inputs.environment == 'dev'
+        if: github.ref == 'refs/heads/main'
         run: echo "App runner dev environment output ${{ steps.deploy-apprunner-dev.outputs.service-id }}"
 
       - name: App Runner Test Environment Output
-        if: github.event.inputs.environment == 'test'
+        if: steps.approval-test.outputs.approval-status == 'approved'
         run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"
 
       - name: App Runner Prod Environment Output
-        if: github.event.inputs.environment == 'prod'
+        if: steps.approval-prod.outputs.approval-status == 'approved'
         run: echo "App runner prod environment output ${{ steps.deploy-apprunner-prod.outputs.service-id }}"

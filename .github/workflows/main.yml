@@ -39,8 +39,10 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: nodejs
           IMAGE_TAG: ${{ github.sha }}
-          IMAGE_NAME: $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          IMAGE_NAME: $ECR_REGISTRY/${{ env.ECR_REPOSITORY_LOWERCASE }}:$IMAGE_TAG
+          ECR_REPOSITORY_LOWERCASE: ${{ env.ECR_REPOSITORY_LOWER }}
         run: |
+          export ECR_REPOSITORY_LOWER=$(echo $ECR_REPOSITORY | tr '[:upper:]' '[:lower:]')
           docker build -t $IMAGE_NAME .
           docker push $IMAGE_NAME
           echo "::set-output name=image::$IMAGE_NAME"

@@ -7,12 +7,13 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Select the environment to deploy (test or prod)'
+        description: 'Environment to deploy'
         required: true
-        default: 'test'
+        default: 'dev'
         options:
-          - 'test'
-          - 'prod'
+          - dev
+          - test
+          - prod
 
 jobs:
   build-and-deploy-dev:

@@ -7,17 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'Environment to deploy'
+        description: 'In which environment would you like to deploy this application: Dev, Test, or Prod?'
         required: true
-        default: 'dev'
         options:
           - dev
           - test
           - prod
 
 jobs:
-  build-and-deploy-dev:
+  build-and-push-image:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -25,6 +25,7 @@ jobs:
           persist-credentials: false
 
       - name: Configure AWS credentials
+        id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -32,65 +33,73 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
+        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
-      - name: Build, tag, and push image to Amazon ECR
+      - name: Build and push image to Amazon ECR
+        id: build-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           ECR_REPOSITORY: nodejs
           IMAGE_TAG: ${{ github.sha }}
-          IMAGE_NAME: $ECR_REGISTRY/${{ env.ECR_REPOSITORY_LOWERCASE }}:$IMAGE_TAG
-          ECR_REPOSITORY_LOWERCASE: ${{ env.ECR_REPOSITORY_LOWER }}
         run: |
-          export ECR_REPOSITORY_LOWER=$(echo $ECR_REPOSITORY | tr '[:upper:]' '[:lower:]')
-          docker build -t $IMAGE_NAME .
-          docker push $IMAGE_NAME
-          echo "::set-output name=image::$IMAGE_NAME"
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
+  deploy-to-dev:
+    needs: build-and-push-image
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'dev' }}
+
+    steps:
       - name: Deploy to App Runner - Dev Environment
         id: deploy-apprunner-dev
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ steps.build-and-push.outputs.image }}
+          image: ${{ needs.build-and-push-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-west-2 # Update with the desired region for the dev environment
           wait-for-service-stability: true
 
+      - name: App Runner Dev Environment Output
+        run: echo "App runner dev environment output ${{ steps.deploy-apprunner-dev.outputs.service-id }}"
+
   deploy-to-test:
-    needs: build-and-deploy-dev
-    if: needs.build-and-deploy-dev.result == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'test'
+    needs: deploy-to-dev
     runs-on: ubuntu-latest
-    steps:
-      - name: Manual Approval for Test Environment
-        id: approval-test
-        uses: actions/github-script@v4
-        with:
-          github-token: ${{ secrets.TOKEN }}
-          script: |
-            console.log('::warning::Please manually approve the deployment to the Test environment.');
-            console.log('::set-output name=approval-status::approved');
+    if: ${{ github.event.inputs.environment == 'test' }}
 
-  deploy-to-prod:
-    needs: deploy-to-test
-    if: needs.deploy-to-test.result == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod'
-    runs-on: ubuntu-latest
     steps:
-      - name: Manual Approval for Prod Environment
-        id: approval-prod
-        uses: actions/github-script@v4
-        with:
-          github-token: ${{ secrets.TOKEN }}
-          script: |
-            console.log('::warning::Please manually approve the deployment to the Prod environment.');
-            console.log('::set-output name=approval-status::approved');
-
-      - name: Deploy to App Runner - Prod Environment
-        if: steps.approval-prod.outputs.approval-status == 'approved'
+      - name: Deploy to App Runner - Test Environment
+        id: deploy-apprunner-test
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ steps.build-and-push.outputs.image }}
+          image: ${{ needs.build-and-push-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-east-2 # Update with the desired region for the prod environment
+          region: us-east-1  # Update with the desired region for the test environment
           wait-for-service-stability: true
+
+      - name: App Runner Test Environment Output
+        run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"
+
+  deploy-to-prod:
+    needs: deploy-to-test
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.environment == 'prod' }}
+
+    steps:
+      - name: Deploy to App Runner - Prod Environment
+        id: deploy-apprunner-prod
+        uses: awslabs/amazon-app-runner-deploy@main
+        with:
+          service: techno-app-runner
+          image: ${{ needs.build-and-push-image.outputs.image }}
+          access-role-arn: ${{ secrets.ROLE_ARN }}
+          region: us-east-2  # Update with the desired region for the prod environment
+          wait-for-service-stability: true
+
+      - name: App Runner Prod Environment Output
+        run: echo "App runner prod environment output ${{ steps.deploy-apprunner-prod.outputs.service-id }}"

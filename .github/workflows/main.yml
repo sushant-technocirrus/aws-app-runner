@@ -92,7 +92,7 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.deploy_test.outputs.deploy-apprunner-test.outputs.service-id != null && needs.deploy_test.outputs.deploy-apprunner-test.outputs.build-image.outputs.image != null ? needs.deploy_test.outputs.deploy-apprunner-test.outputs.build-image.outputs.image }}
+          image: ${{ if needs.deploy_test.outputs.deploy-apprunner-test.outputs.service-id != null && needs.deploy_test.outputs.deploy-apprunner-test.outputs.build-image.outputs.image != null }}${{ needs.deploy_test.outputs.deploy-apprunner-test.outputs.build-image.outputs.image }}${{ else }}''${{ endif }}
 
 
           access-role-arn: ${{ secrets.ROLE_ARN }}

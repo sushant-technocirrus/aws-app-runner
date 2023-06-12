@@ -64,8 +64,7 @@ jobs:
         run: echo "App runner dev environment output ${{ steps.deploy-apprunner-dev.outputs.service-id }}"
 
       - name: Deploy to App Runner - Test Environment
-        if: github.event.inputs.environment == 'test'
-        needs: deploy-apprunner-dev
+        if: github.event.inputs.environment == 'test' && needs.deploy.outputs.deploy-apprunner-dev.outputs.service-id != null
         id: deploy-apprunner-test
         uses: awslabs/amazon-app-runner-deploy@main
         with:
@@ -80,8 +79,7 @@ jobs:
         run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"
 
       - name: Deploy to App Runner - Prod Environment
-        if: github.event.inputs.environment == 'prod'
-        needs: deploy-apprunner-test
+        if: github.event.inputs.environment == 'prod' && needs.deploy.outputs.deploy-apprunner-test.outputs.service-id != null
         id: deploy-apprunner-prod
         uses: awslabs/amazon-app-runner-deploy@main
         with:

@@ -1,4 +1,4 @@
-name: Deploy to App Runner - Test
+name: Deploy to App Runner - Test Environment
 
 on:
   workflow_dispatch:
@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     environment: test
 
-    needs: dev
+    needs: dev.deploy
 
     steps:
       - name: Checkout
@@ -32,21 +32,15 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-
       - name: Deploy to App Runner - Test Environment
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'test'
         id: deploy-apprunner-test
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.dev.outputs.deploy-apprunner-dev.outputs.service-id }}
+          image: ${{ needs.dev.outputs.build-image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-1  # Update with the desired region for the test environment
           wait-for-service-stability: true
 
       - name: App Runner Test Environment Output
-        if: github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'test'
         run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"

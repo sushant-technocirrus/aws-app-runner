@@ -15,9 +15,9 @@ on:
           - prod
 
 jobs:
-  deploy:
+  deploy_dev:
     runs-on: ubuntu-latest
-    environment: ${{ github.event.inputs.environment }}
+    if: github.event.inputs.environment == 'dev'
 
     steps:
       - name: Checkout
@@ -49,7 +49,6 @@ jobs:
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
       - name: Deploy to App Runner - Dev Environment
-        if: github.event.inputs.environment == 'dev'
         id: deploy-apprunner-dev
         uses: awslabs/amazon-app-runner-deploy@main
         with:
@@ -59,38 +58,41 @@ jobs:
           region: us-west-2 # Update with the desired region for the dev environment
           wait-for-service-stability: true
 
+      - name: App Runner Dev Environment Output
+        run: echo "App runner dev environment output ${{ steps.deploy-apprunner-dev.outputs.service-id }}"
+
+  deploy_test:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'test' && success('deploy_dev')
+
+    steps:
       - name: Deploy to App Runner - Test Environment
-        if: github.event.inputs.environment == 'test' && success('deploy-apprunner-dev')
-        needs: deploy-apprunner-dev
         id: deploy-apprunner-test
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ needs.deploy_dev.outputs.build-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-1  # Update with the desired region for the test environment
           wait-for-service-stability: true
 
+      - name: App Runner Test Environment Output
+        run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"
+
+  deploy_prod:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.environment == 'prod' && success('deploy_test')
+
+    steps:
       - name: Deploy to App Runner - Prod Environment
-        if: github.event.inputs.environment == 'prod' && success('deploy-apprunner-test')
-        needs: deploy-apprunner-test
         id: deploy-apprunner-prod
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ needs.deploy_test.outputs.build-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-2  # Update with the desired region for the prod environment
           wait-for-service-stability: true
 
-      - name: App Runner Dev Environment Output
-        if: github.event.inputs.environment == 'dev'
-        run: echo "App runner dev environment output ${{ steps.deploy-apprunner-dev.outputs.service-id }}"
-
-      - name: App Runner Test Environment Output
-        if: github.event.inputs.environment == 'test'
-        run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"
-
       - name: App Runner Prod Environment Output
-        if: github.event.inputs.environment == 'prod'
         run: echo "App runner prod environment output ${{ steps.deploy-apprunner-prod.outputs.service-id }}"

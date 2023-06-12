@@ -49,7 +49,7 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.build-and-push.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-west-2 # Update with the desired region for the dev environment
           wait-for-service-stability: true
@@ -87,7 +87,7 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.build-and-push.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-2 # Update with the desired region for the prod environment
           wait-for-service-stability: true

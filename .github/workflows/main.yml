@@ -72,7 +72,7 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.deploy_dev.outputs.build-image.outputs.image }}
+          image: ${{ needs.deploy_dev.outputs.build-image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-1  # Update with the desired region for the test environment
           wait-for-service-stability: true

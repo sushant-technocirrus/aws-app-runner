@@ -62,8 +62,9 @@ jobs:
         run: echo "App runner dev environment output ${{ steps.deploy-apprunner-dev.outputs.service-id }}"
 
   deploy_test:
+    needs: deploy_dev
     runs-on: ubuntu-latest
-    if: github.event.inputs.environment == 'test' && success('deploy_dev')
+    if: github.event.inputs.environment == 'test'
 
     steps:
       - name: Deploy to App Runner - Test Environment
@@ -80,8 +81,9 @@ jobs:
         run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"
 
   deploy_prod:
+    needs: deploy_test
     runs-on: ubuntu-latest
-    if: github.event.inputs.environment == 'prod' && success('deploy_test')
+    if: github.event.inputs.environment == 'prod'
 
     steps:
       - name: Deploy to App Runner - Prod Environment

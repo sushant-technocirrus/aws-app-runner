@@ -1,4 +1,4 @@
-name: Deploy to App Runner - Dev Environment
+name: Deploy to App Runner - Dev
 
 on:
   workflow_dispatch:

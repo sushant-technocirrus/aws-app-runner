@@ -1,13 +1,10 @@
 name: Deploy to App Runner - Dev
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       environment:
-        description: 'In which environment would you like to deploy this application: Dev'
+        description: 'In which environment would you like to deploy this application: Dev, Test, or Prod?'
         required: true
         options:
           - dev
@@ -15,8 +12,6 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: dev
-
     steps:
       - name: Checkout
         uses: actions/checkout@v2

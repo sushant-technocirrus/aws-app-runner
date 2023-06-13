@@ -12,6 +12,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       - name: Checkout
@@ -41,13 +42,11 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "DEV_IMAGE=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
 
-      - name: Deploy to App Runner - Dev Environment
-        id: deploy-apprunner-dev
-        uses: awslabs/amazon-app-runner-deploy@main
+      - name: Dispatch deployment status
+        uses: peter-evans/repository-dispatch@v1
         with:
-          service: techno-app-runner
-          image: ${{ steps.build-image.outputs.image }}
-          access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-west-2 # Update with the desired region for the dev environment
-          wait-for-service-stability: true
+          token: ${{ secrets.TOKEN }}
+          event-type: deployment-status
+          client_payload: '{"environment": "dev", "status": "success"}'

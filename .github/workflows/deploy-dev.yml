@@ -42,7 +42,7 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-
+          
       - name: Deploy to App Runner - Dev Environment
         id: deploy-apprunner-dev
         uses: awslabs/amazon-app-runner-deploy@main
@@ -50,5 +50,5 @@ jobs:
           service: techno-app-runner
           image: ${{ steps.build-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-west-2 # Update with the desired region for the dev environment
+          region: us-west-2  # Update with the desired region for the dev environment
           wait-for-service-stability: true

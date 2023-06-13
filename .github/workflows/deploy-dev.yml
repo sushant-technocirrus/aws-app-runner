@@ -42,11 +42,27 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-          echo "DEV_IMAGE=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_ENV
+          echo $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG >> $GITHUB_ENV
+          
+      - name: Set image as secret
+        run: |
+          echo "DEV_IMAGE=${{ steps.build-image.outputs.image }}" >> $GITHUB_ENV
+          echo ${{ steps.build-image.outputs.image }} >> ${{ secrets.DEV_IMAGE_SECRET }}
 
       - name: Dispatch deployment status
         uses: peter-evans/repository-dispatch@v1
         with:
-          token: ${{ secrets.TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           event-type: deployment-status
           client_payload: '{"environment": "dev", "status": "success"}'
+
+      - name: Deploy to App Runner - Dev Environment
+        if: github.event.client_payload.environment == 'dev' && github.event.client_payload.status == 'success'
+        id: deploy-apprunner-dev
+        uses: awslabs/amazon-app-runner-deploy@main
+        with:
+          service: app-runner-dev-service # Replace with the appropriate service name for the Dev environment
+          image: ${{ steps.build-image.outputs.image }}
+          access-role-arn: ${{ secrets.ROLE_ARN }}
+          region: us-west-2 # Update with the desired region for the Dev environment
+          wait-for-service-stability: true

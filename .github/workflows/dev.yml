@@ -57,3 +57,4 @@ jobs:
       - name: App Runner Dev Environment Output
         if: github.event.inputs.environment == 'dev'
         run: echo "App runner dev environment output ${{ steps.deploy-apprunner-dev.outputs.service-id }}"
+        

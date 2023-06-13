@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'In which environment would you like to deploy this application: Test'
+        description: 'In which environment would you like to deploy this application: Dev, Test, or Prod?'
         required: true
         options:
           - test
@@ -12,8 +12,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: test
-
+    needs: deploy-dev.deploy
     steps:
       - name: Checkout
         uses: actions/checkout@v2
@@ -33,10 +32,10 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.deploy-dev.outputs.image }}
+          image: ${{ needs.deploy-dev.outputs.build-image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-east-1
-          wait-for-service-stability-seconds: 300
+          region: us-east-1 # Update with the desired region for the test environment
+          wait-for-service-stability: true
 
       - name: App Runner Test Environment Output
         run: echo "App runner test environment output ${{ steps.deploy-apprunner-test.outputs.service-id }}"

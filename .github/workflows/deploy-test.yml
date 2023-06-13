@@ -1,22 +1,18 @@
-name: Deploy to App Runner - Test Environment
+name: Deploy to App Runner - Test
 
 on:
   workflow_dispatch:
     inputs:
       environment:
-        description: 'In which environment would you like to deploy this application: Dev, Test, or Prod?'
+        description: 'In which environment would you like to deploy this application: Test'
         required: true
         options:
-          - dev
           - test
-          - prod
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: test
-
-    needs: dev.deploy
 
     steps:
       - name: Checkout
@@ -30,16 +26,16 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-region: us-east-1
 
       - name: Deploy to App Runner - Test Environment
         id: deploy-apprunner-test
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.dev.outputs.build-image }}
+          image: ${{ needs.deploy-dev.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-east-1  # Update with the desired region for the test environment
+          region: us-east-1 # Update with the desired region for the test environment
           wait-for-service-stability: true
 
       - name: App Runner Test Environment Output

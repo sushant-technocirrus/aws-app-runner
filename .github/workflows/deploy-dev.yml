@@ -1,9 +1,6 @@
-name: Main Workflow
+name: Deploy to App Runner - Dev Environment
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
     inputs:
       environment:
@@ -11,11 +8,9 @@ on:
         required: true
         options:
           - dev
-          - test
-          - prod
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -30,7 +25,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
@@ -45,10 +40,14 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          echo $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG > image.txt
-          
-      - name: Upload artifact
-        uses: actions/upload-artifact@v2
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Deploy to App Runner - Dev Environment
+        id: deploy-apprunner-dev
+        uses: awslabs/amazon-app-runner-deploy@main
         with:
-          name: image-artifact
-          path: image.txt
+          service: techno-app-runner
+          image: ${{ steps.build-image.outputs.image }}
+          access-role-arn: ${{ secrets.ROLE_ARN }}
+          region: us-west-2 # Update with the desired region for the dev environment
+          wait-for-service-stability: true

@@ -10,9 +10,10 @@ on:
           - dev
 
 jobs:
-  deploy:
+  deploy_dev:
     runs-on: ubuntu-latest
     steps:
+      # Steps for deploying to the dev environment
       - name: Checkout
         uses: actions/checkout@v2
         with:
@@ -23,11 +24,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-west-2
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Build, tag, and push image to Amazon ECR
         id: build-image
@@ -39,7 +36,7 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
-          
+
       - name: Deploy to App Runner - Dev Environment
         id: deploy-apprunner-dev
         uses: awslabs/amazon-app-runner-deploy@main
@@ -49,6 +46,3 @@ jobs:
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-west-2 # Update with the desired region for the dev environment
           wait-for-service-stability: true
-
-    outputs:
-      image: ${{ steps.build-image.outputs.image }}

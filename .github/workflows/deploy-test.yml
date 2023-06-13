@@ -36,7 +36,7 @@ jobs:
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ github.event.repository.owner.login }}/nodejs:${{ github.sha }}
+          image: 285984116532.dkr.ecr.us-west-2.amazonaws.com/nodejs:${{ github.sha }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-1 # Update with the desired region for the test environment
           wait-for-service-stability-seconds: 300 # Update with the desired timeout duration

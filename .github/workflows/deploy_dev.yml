@@ -1,22 +1,18 @@
 name: Deploy to App Runner - Dev Environment
 
 on:
-  workflow_run:
-    workflows: ["deploy-image.yml"]
-    types:
-      - completed
   workflow_dispatch:
     inputs:
       environment:
-        description: 'In which environment would you like to deploy this application: Test or Prod?'
+        description: 'In which environment would you like to deploy this application: Dev, Test, or Prod?'
         required: true
         options:
-          - test
-          - prod
+          - dev
 
 jobs:
-  deploy-dev:
+  deploy:
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       - name: Checkout
@@ -24,37 +20,22 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Configure AWS credentials
-        id: aws-credentials
-        uses: aws-actions/configure-aws-credentials@v1
+      - name: Download artifact
+        uses: actions/download-artifact@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          name: image-artifact
+
+      - name: Read image reference
+        id: read-image
+        run: |
+          echo "::set-output name=image::$(cat image-artifact/image.txt)"
 
       - name: Deploy to App Runner - Dev Environment
         id: deploy-apprunner-dev
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ github.event.workflow_run.outputs.image }}
+          image: ${{ steps.read-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-west-2 # Update with the desired region for the dev environment
           wait-for-service-stability: true
-
-      - name: Trigger Deploy to Test/Prod Environment
-        if: github.event.workflow_run.conclusion == 'success' && github.event.inputs.environment != 'dev'
-        uses: actions/github-script@v3
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const workflow = await octokit.rest.actions.createWorkflowDispatch({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              workflow_id: 'deploy-test.yml', // Update with the workflow file name for the desired environment
-              ref: context.sha,
-              inputs: {
-                environment: '${{ github.event.inputs.environment }}'
-              }
-            });
-            console.log(workflow);

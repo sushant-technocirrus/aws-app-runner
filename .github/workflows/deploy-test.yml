@@ -39,4 +39,4 @@ jobs:
           image: ${{ github.event.repository.owner.login }}/nodejs:${{ github.sha }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
           region: us-east-1 # Update with the desired region for the test environment
-          wait-for-service-stability: true
+          wait-for-service-stability-seconds: 300 # Update with the desired timeout duration

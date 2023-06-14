@@ -18,6 +18,7 @@ jobs:
   deploy_dev:
     runs-on: ubuntu-latest
     environment: dev
+    if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'dev' }}
 
     steps:
       - name: Checkout
@@ -26,7 +27,6 @@ jobs:
           persist-credentials: false
 
       - name: Configure AWS credentials
-        id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -48,20 +48,21 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
 
-      - name: Deploy to App Runner - Dev Environment
+      - name: Deploy to App Runner - dev Environment
         id: deploy-apprunner-dev
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
           image: ${{ steps.build-image.outputs.image }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-west-2 # Update with the desired region for the dev environment
-          wait-for-service-stability: true
+          region: us-west-2
+          wait-for-service-stability-seconds: 300
 
   deploy_test:
-    needs: deploy_dev
     runs-on: ubuntu-latest
     environment: test
+    needs: deploy_dev
+    if: ${{ needs.deploy_dev.result == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'test' }}
 
     steps:
       - name: Checkout
@@ -70,28 +71,27 @@ jobs:
           persist-credentials: false
 
       - name: Configure AWS credentials
-        id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1 
+          aws-region: us-east-1
 
-      - name: Deploy to App Runner - Test Environment
-        if: needs.deploy_dev.result == 'success'
+      - name: Deploy to App Runner - test Environment
         id: deploy-apprunner-test
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.deploy_dev.outputs.deploy-apprunner-dev.image }}
+          source-connection-arn: ${{ needs.deploy_dev.outputs.deploy-apprunner-dev.source-connection-arn }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-east-1  # Update with the desired region for the test environment
-          wait-for-service-stability: true
+          region: us-east-1
+          wait-for-service-stability-seconds: 300
 
   deploy_prod:
-    needs: deploy_test
     runs-on: ubuntu-latest
     environment: prod
+    needs: deploy_test
+    if: ${{ needs.deploy_test.result == 'success' && github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod' }}
 
     steps:
       - name: Checkout
@@ -100,20 +100,18 @@ jobs:
           persist-credentials: false
 
       - name: Configure AWS credentials
-        id: aws-credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
 
-      - name: Deploy to App Runner - Prod Environment
-        if: needs.deploy_test.result == 'success'
+      - name: Deploy to App Runner - prod Environment
         id: deploy-apprunner-prod
         uses: awslabs/amazon-app-runner-deploy@main
         with:
           service: techno-app-runner
-          image: ${{ needs.deploy_test.outputs.deploy-apprunner-test.image }}
+          source-connection-arn: ${{ needs.deploy_dev.outputs.deploy-apprunner-dev.source-connection-arn }}
           access-role-arn: ${{ secrets.ROLE_ARN }}
-          region: us-east-2  # Update with the desired region for the prod environment
-          wait-for-service-stability: true
+          region: us-east-2
+          wait-for-service-stability-seconds: 300

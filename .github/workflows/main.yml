@@ -1,0 +1,116 @@
+name: Deploy to App Runner - Image based
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'In which environment would you like to deploy this application: Dev, Test, or Prod?'
+        required: true
+        options:
+          - dev
+          - test
+          - prod
+
+jobs:
+  deploy_dev:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Build, tag, and push image to Amazon ECR
+        id: build-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: nodejs
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+
+      - name: Deploy to App Runner - Dev Environment
+        id: deploy-apprunner-dev
+        uses: awslabs/amazon-app-runner-deploy@main
+        with:
+          service: techno-app-runner
+          image: ${{ steps.build-image.outputs.image }}
+          access-role-arn: ${{ secrets.ROLE_ARN }}
+          region: us-west-2 # Update with the desired region for the dev environment
+          wait-for-service-stability: true
+
+  deploy_test:
+    needs: deploy_dev
+    runs-on: ubuntu-latest
+    environment: test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 
+
+      - name: Deploy to App Runner - Test Environment
+        if: needs.deploy_dev.result == 'success'
+        id: deploy-apprunner-test
+        uses: awslabs/amazon-app-runner-deploy@main
+        with:
+          service: techno-app-runner
+          image: ${{ needs.deploy_dev.outputs.deploy-apprunner-dev.image }}
+          access-role-arn: ${{ secrets.ROLE_ARN }}
+          region: us-east-1  # Update with the desired region for the test environment
+          wait-for-service-stability: true
+
+  deploy_prod:
+    needs: deploy_test
+    runs-on: ubuntu-latest
+    environment: prod
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Configure AWS credentials
+        id: aws-credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+
+      - name: Deploy to App Runner - Prod Environment
+        if: needs.deploy_test.result == 'success'
+        id: deploy-apprunner-prod
+        uses: awslabs/amazon-app-runner-deploy@main
+        with:
+          service: techno-app-runner
+          image: ${{ needs.deploy_test.outputs.deploy-apprunner-test.image }}
+          access-role-arn: ${{ secrets.ROLE_ARN }}
+          region: us-east-2  # Update with the desired region for the prod environment
+          wait-for-service-stability: true

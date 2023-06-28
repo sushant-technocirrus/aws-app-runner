@@ -1,6 +1,6 @@
 <!-- BEGIN_TF_DOCS -->
 
-# **Terraform Module - ECS (Fargate)**
+# **Terraform Module - ECS (Fargate) **
 
 ## **__Overview__**
 
@@ -11,28 +11,30 @@ This Terraform code provides an infrastructure deployment and automates the prov
 
 This is the folder structure for the project:
 
+## Folder Structure
+
 - **config**
-  ├── dev
-  ├── test
-  └── prod
+  - dev
+  - test
+  - prod
 - **infra**
-  ├── s3
-  ├── networking
-  ├── loadbalancer
-  └── ecs
+  - s3
+  - networking
+  - loadbalancer
+  - ecs
 - **modules**
-  ├── vpc
-  ├── subnet
-  ├── route-table
-  ├── nacl
-  ├── s3
-  ├── alb
-  ├── sg
-  ├── ecs-cluster-service
-  ├── task-definition-fargate
-  ├── app-autoscaling-target-fargate
-  ├── iam-role-fargate
-  └── ecr
+  - vpc
+  - subnet
+  - route-table
+  - nacl
+  - s3
+  - alb
+  - sg
+  - ecs-cluster-service
+  - task-definition-fargate
+  - app-autoscaling-target-fargate
+  - iam-role-fargate
+  - ecr
 
 
 

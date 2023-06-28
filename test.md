@@ -1,6 +1,6 @@
 <!-- BEGIN_TF_DOCS -->
 
-# **Terraform Module - ECS (Fargate) **
+# **Terraform Module - ECS (Fargate)**
 
 ## **__Overview__**
 

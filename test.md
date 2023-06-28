@@ -1,57 +1,39 @@
 <!-- BEGIN_TF_DOCS -->
 
-# **Terraform Module - ECS (Fargate) **
+# **Terraform Module - ECS (Fargate)**
 
 ## **__Overview__**
 
 This Terraform code provides an infrastructure deployment and automates the provisioning of resources as per folder structure.
-**config :**  1. dev
-              2. test
-              3. prod
-**infra :**   1. s3
-              2. networking
-              3. loadbalancer
-              4. ecs
-**modules :** 1. vpc
-              2. subnet
-              3. route-table
-              4. nacl
-              5. s3
-              6. alb
-              7. sg
-              8. ecs-cluster-service
-              9. task-defination-fargate
-              10.app-autoscaling-target-fargate
-              11.iam-role-fargate
-              12.ecr
 
-## **Requirements**
 
-Create AWS infrastructure using terraform code
+## **Folder Structure**
 
-VPC
+This is the folder structure for the project:
 
-Public Subnet 
+- **config**
+  ├── dev
+  ├── test
+  └── prod
+- **infra**
+  ├── s3
+  ├── networking
+  ├── loadbalancer
+  └── ecs
+- **modules**
+  ├── vpc
+  ├── subnet
+  ├── route-table
+  ├── nacl
+  ├── s3
+  ├── alb
+  ├── sg
+  ├── ecs-cluster-service
+  ├── task-definition-fargate
+  ├── app-autoscaling-target-fargate
+  ├── iam-role-fargate
+  └── ecr
 
-Private Subnet
-
-NACL
-
-Elastic load balancer
-
-ECS Fargate
-
-ECR
-
-S3
-
-Create above resources using terraform code.
-
-Enable VPC flow logs & store vpc flow logs in S3 bucket. 
-
-Enable ELB access logs to store in S3 bucket &  Make sure only port 80 and 443 allow for external work from ELB and fargate only communicate with ELB using security group for port 80 and 443.
-
-Attach role to fargate to make communication with ECR.
 
 
 ## **Providers**
@@ -159,9 +141,6 @@ When deploying the infrastructure using this Terraform configuration, it is impo
 3. Create the Application Load Balancer (ALB): Once the VPC and its resources are in place, create the ALB. The ALB serves as the entry point for incoming traffic and routes it to the appropriate ECS services.
 
 4. Create the ECS Services: Finally, create the ECS services that will host your applications. These services will be registered with the ALB and configured to handle incoming requests.
-
-
-
 
 
 

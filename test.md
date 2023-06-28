@@ -1,6 +1,6 @@
 <!-- BEGIN_TF_DOCS -->
 
-# **Terraform Module - ECS (Fargate) **
+# **Terraform Module - ECS (Fargate)**
 
 ## **__Overview__**
 
@@ -55,7 +55,7 @@ This is the folder structure for the project:
 7. [sg](https://github.com/technocirrus-devops/AWS-Infrastructure-using-Terraform/tree/main/modules/sg) <br>
 8. [ecs-cluster-service-fargate](https://github.com/technocirrus-devops/AWS-Infrastructure-using-Terraform/tree/main/modules/ecs-cluster-service-fargate) <br>
 9. [task-defination-fargate](https://github.com/technocirrus-devops/AWS-Infrastructure-using-Terraform/tree/main/modules/task-defination-fargate) <br>
-10 .[app-autoscaling-target-fargate](https://github.com/technocirrus-devops/AWS-Infrastructure-using-Terraform/tree/main/modules/app-autoscaling-target-fargate) <br>
+10. [app-autoscaling-target-fargate](https://github.com/technocirrus-devops/AWS-Infrastructure-using-Terraform/tree/main/modules/app-autoscaling-target-fargate) <br>
 11. [iam-role-fargate](https://github.com/technocirrus-devops/AWS-Infrastructure-using-Terraform/tree/main/modules/iam-role-fargate) <br>
 12. [ecr](https://github.com/technocirrus-devops/AWS-Infrastructure-using-Terraform/tree/main/modules/ecr) <br>
 
